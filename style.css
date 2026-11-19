@@ -1,0 +1,705 @@
+:root{
+    --box-radius: 1.25rem;
+}
+
+h1{
+    text-align: center;
+    margin: 0.5rem 0 0.75rem;
+}
+
+.bismillah{
+    display: block;
+    width: min(76vw, 26rem);
+    max-height: 16vh;
+    object-fit: contain;
+    margin: 0 auto;
+}
+
+.flewer{
+    display: block;
+    width: clamp(5rem, 15vw, 8rem);
+    height: auto;
+    margin: 0 auto clamp(1rem, 3vw, 1.75rem);
+}
+
+.invitation-copy{
+    max-width: 34rem;
+    margin: 0 auto 0.75rem;
+    padding: 0 1.25rem;
+    color: #454545;
+    font-family: "Yanone Kaffeesatz", sans-serif;
+    font-size: clamp(1.2rem, 4vw, 1.8rem);
+    font-optical-sizing: auto;
+    font-weight: 400;
+    font-style: normal;
+    line-height: 1.35;
+    letter-spacing: 0.08em;
+    text-align: center;
+}
+
+.name{
+    text-align: center;
+    font-family: "Kaushan Script", cursive;
+    font-weight: 400;
+    font-style: normal;
+    font-size: clamp(3rem, 10vw, 6rem);
+    line-height: 1.2;
+    margin: 0;
+    color: #293448;
+    letter-spacing: 0.07em;
+}
+
+.location{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    width: fit-content;
+    max-width: calc(100% - 2rem);
+    box-sizing: border-box;
+    font-family: "Roboto Slab", serif;
+    font-size: clamp(0.75rem, 2vw, 1rem);
+    font-weight: 500;
+    line-height: 1.7;
+    color: #454545;
+    margin: clamp(1rem, 3vw, 1.5rem) auto 0;
+    padding: 0.65rem 1rem;
+    border: 1px solid rgb(91 104 128 / 20%);
+    border-radius: 999px;
+    background: rgb(255 255 255 / 28%);
+    box-shadow: 0 0.5rem 1.5rem rgb(41 52 72 / 6%);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    letter-spacing: 0.1em;
+    text-decoration: none;
+    transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.location:hover{
+    background: rgb(255 255 255 / 45%);
+    box-shadow: 0 0.65rem 1.75rem rgb(41 52 72 / 10%);
+}
+
+.location:focus-visible{
+    outline: 2px solid #b56576;
+    outline-offset: 3px;
+}
+
+.location-icon{
+    flex: 0 0 auto;
+    width: 1.15rem;
+    height: 1.15rem;
+    color: #454545;
+}
+
+.date{
+    text-align: center;
+    font-family: "Roboto Slab", serif;
+    font-size: 1rem;
+    line-height: 1.5;
+    color: #454545;
+    margin: 1rem 0 0;
+    letter-spacing: 0;
+}
+
+.countdown-units{
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+.countdown-units[hidden],
+#countdown-message[hidden]{
+    display: none;
+}
+
+.countdown-unit{
+    display: inline-flex;
+    min-width: 4.2rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.1rem;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid rgb(91 104 128 / 20%);
+    border-radius: var(--box-radius);
+    background: rgb(255 255 255 / 32%);
+    white-space: nowrap;
+}
+
+.countdown-unit > span{
+    font-size: clamp(1.1rem, 3vw, 1.45rem);
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+}
+
+.countdown-unit small{
+    color: #454545;
+    font-size: 0.62rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.guest-names{
+    position: relative;
+    z-index: 1;
+    width: min(32rem, calc(100% - 2rem));
+    box-sizing: border-box;
+    margin: 1.5rem auto 3rem;
+    padding: clamp(1rem, 4vw, 1.5rem);
+    border: 1px solid rgb(91 104 128 / 20%);
+    border-radius: var(--box-radius);
+    background: rgb(255 255 255 / 28%);
+    box-shadow: 0 1rem 2.5rem rgb(41 52 72 / 8%);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    text-align: center;
+    font-family: "Yanone Kaffeesatz", sans-serif;
+}
+
+.calendar-card{
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 4vw, 1.5rem);
+    width: min(32rem, calc(100% - 2rem));
+    box-sizing: border-box;
+    margin: -1.5rem auto 3rem;
+    padding: clamp(1rem, 4vw, 1.5rem);
+    border: 1px solid rgb(91 104 128 / 20%);
+    border-radius: var(--box-radius);
+    background: rgb(255 255 255 / 28%);
+    box-shadow: 0 1rem 2.5rem rgb(41 52 72 / 8%);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    font-family: "Yanone Kaffeesatz", sans-serif;
+}
+
+.calendar-icon{
+    display: block;
+    flex: 0 0 clamp(4rem, 15vw, 6rem);
+    width: clamp(4rem, 15vw, 6rem);
+    height: clamp(4rem, 15vw, 6rem);
+    object-fit: contain;
+}
+
+.calendar-content{
+    flex: 1;
+    min-width: 0;
+    text-align: right;
+}
+
+.calendar-card h2{
+    margin: 0;
+    color: #454545;
+    font-family: "Yanone Kaffeesatz", sans-serif;
+    font-size: clamp(1.25rem, 4vw, 1.6rem);
+}
+
+.calendar-card p{
+    margin: 0.4rem 0 0.8rem;
+    color: #454545;
+    font-size: 1.1rem;
+}
+
+.calendar-button{
+    display: inline-block;
+    padding: 0.7rem 1.25rem;
+    border-radius: var(--box-radius);
+    background: #b56576;
+    color: #fff;
+    font-size: 1.1rem;
+    text-decoration: none;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.calendar-button:hover{
+    background: #a65667;
+    transform: translateY(-1px);
+}
+
+.calendar-button:focus-visible{
+    outline: 2px solid #b56576;
+    outline-offset: 3px;
+}
+
+.music-control{
+    position: fixed;
+    right: 1rem;
+    top: 1rem;
+    z-index: 3;
+    padding: 0.65rem 1rem;
+    border: 0;
+    border-radius: 999px;
+    background: #b56576;
+    color: #fff;
+    font: 1rem "Yanone Kaffeesatz", sans-serif;
+    cursor: pointer;
+    box-shadow: 0 0.4rem 1.2rem rgb(41 52 72 / 18%);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s;
+}
+
+.music-control.is-scrolling{
+    opacity: 0;
+    transform: translateY(-0.5rem);
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s;
+}
+
+.music-control.is-scrolling:disabled{
+    opacity: 0;
+}
+
+.music-control:hover{
+    background: #a65667;
+}
+
+.music-control:disabled{
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.music-control:focus-visible{
+    outline: 2px solid #454545;
+    outline-offset: 3px;
+}
+
+.guest-names h2{
+    margin: 0 0 1rem;
+    font-family: "Yanone Kaffeesatz", sans-serif;
+    font-size: clamp(1.35rem, 4vw, 1.8rem);
+    color: #454545;
+}
+
+.name-form{
+    display: flex;
+    gap: 0.5rem;
+}
+
+.name-form input{
+    flex: 1;
+    min-width: 0;
+    padding: 0.8rem 0.95rem;
+    border: 1px solid rgb(91 104 128 / 28%);
+    border-radius: var(--box-radius);
+    background: rgb(255 255 255 / 38%);
+    color: #454545;
+    font: inherit;
+}
+
+.name-form input::placeholder{
+    color: #454545;
+}
+
+.name-form button{
+    padding: 0.8rem 1.2rem;
+    border: 0;
+    border-radius: var(--box-radius);
+    background: #b56576;
+    color: #fff;
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+}
+
+.name-form button:hover{
+    background: #a65667;
+    transform: translateY(-1px);
+}
+
+.name-form input:focus-visible,
+.name-form button:focus-visible{
+    outline: 2px solid #b56576;
+    outline-offset: 2px;
+}
+
+.names-box{
+    min-height: 4rem;
+    max-height: 12rem;
+    overflow-y: auto;
+    margin-top: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid rgb(91 104 128 / 18%);
+    border-radius: var(--box-radius);
+    background: rgb(255 255 255 / 22%);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+    text-align: left;
+}
+
+.names-box h3{
+    margin: 0 0 0.5rem;
+    color: #454545;
+    font-size: 0.95rem;
+    letter-spacing: 0.04em;
+}
+
+.names-box ul{
+    display: grid;
+    gap: 0.35rem;
+    margin: 0;
+    padding-left: 1.2rem;
+}
+
+.names-box p{
+    margin: 0;
+    color: #454545;
+    font-size: 0.9rem;
+}
+
+.visually-hidden{
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+body{
+    position: relative;
+    isolation: isolate;
+    min-height: 100vh;
+    background: #f1eff1;
+    margin: 0;
+    padding: 0 0 2rem;
+    color: #454545;
+    font-family: "Roboto Slab", serif;
+}
+
+body::before{
+    content: "";
+    position: fixed;
+    inset: -2rem;
+    z-index: -1;
+    background:
+        radial-gradient(ellipse at 76% 66%, #e0c6ce 0%, transparent 50%),
+        radial-gradient(ellipse at 12% 18%, #d4deed 0%, transparent 52%),
+        linear-gradient(180deg, #f597cc 0%, #faeac8 45%, #fde4a3 100%);
+    filter: blur(2.5rem);
+    pointer-events: none;
+}
+
+body > h1,
+body > .flewer,
+body > .invitation-copy,
+body > .name,
+body > .location,
+body > .date,
+body > .guest-names,
+body > .calendar-card{
+    position: relative;
+    z-index: 1;
+}
+
+@keyframes content-pop-in{
+    from{
+        opacity: 0;
+        transform: translateY(1rem) scale(0.96);
+    }
+    to{
+        opacity: var(--pop-opacity, 1);
+        transform: translateY(0) scale(1);
+    }
+}
+
+.launch-overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    box-sizing: border-box;
+    padding: clamp(1rem, 4vw, 2rem);
+    background: rgb(41 52 72 / 32%);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.4s ease, visibility 0.4s ease;
+}
+
+.launch-overlay.is-hidden{
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.launch-card{
+    width: min(32rem, calc(100vw - 2rem));
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: clamp(1.5rem, 5vw, 2.25rem);
+    border: 1px solid rgb(181 101 118 / 24%);
+    border-radius: 2rem;
+    background: linear-gradient(145deg, rgb(255 255 255 / 98%), rgb(250 242 245 / 97%));
+    box-shadow: 0 1.5rem 4rem rgb(41 52 72 / 20%), 0 0 0 0.35rem rgb(255 255 255 / 22%);
+    text-align: center;
+}
+
+.launch-ring{
+    display: block;
+    width: clamp(4rem, 12vw, 5rem);
+    height: 3.5rem;
+    object-fit: contain;
+    margin: 0 auto 0.9rem;
+}
+
+.launch-title{
+    margin: 0;
+    color: #26354c;
+    font-family: "Yanone Kaffeesatz", sans-serif;
+    font-size: clamp(1.55rem, 5vw, 2.2rem);
+    font-weight: 500;
+    letter-spacing: 0.025em;
+    line-height: 1.2;
+}
+
+.launch-couple{
+    margin: 0.4rem 0 1.7rem;
+    color: #293448;
+    font-family: "Kaushan Script", cursive;
+    font-size: clamp(2.5rem, 9vw, 4.2rem);
+    line-height: 1.15;
+}
+
+.launch-music-row{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    width: fit-content;
+    box-sizing: border-box;
+    margin: 0 auto 1.25rem;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid rgb(181 101 118 / 12%);
+    border-radius: 1rem;
+    background: rgb(255 255 255 / 58%);
+}
+
+.launch-music-icon{
+    display: grid;
+    width: 2.5rem;
+    height: 2.5rem;
+    place-items: center;
+    border-radius: 50%;
+    background: rgb(181 101 118 / 10%);
+    color: #b56576;
+}
+
+.launch-music-icon svg{
+    width: 1.3rem;
+    height: 1.3rem;
+}
+
+.launch-music-switch{
+    position: relative;
+    display: block;
+    width: 3rem;
+    height: 1.75rem;
+}
+
+.launch-music-switch input{
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.launch-music-switch span:not(.visually-hidden){
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    background: #c8d1dc;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.launch-music-switch span:not(.visually-hidden)::after{
+    content: "";
+    position: absolute;
+    top: 0.25rem;
+    left: 0.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0.15rem 0.4rem rgb(41 52 72 / 18%);
+    transition: transform 0.2s ease;
+}
+
+.launch-music-switch input:checked + span{
+    background: #b56576;
+}
+
+.launch-music-switch input:checked + span::after{
+    transform: translateX(1.25rem);
+}
+
+.launch-music-switch input:focus-visible + span{
+    outline: 3px solid rgb(181 101 118 / 35%);
+    outline-offset: 3px;
+}
+
+.launch-button{
+    width: 100%;
+    min-height: 4.25rem;
+    border: 0;
+    border-radius: 999px;
+    background: #b56576;
+    color: #fff;
+    font-family: "Yanone Kaffeesatz", sans-serif;
+    font-size: clamp(1.05rem, 3.5vw, 1.25rem);
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 0.65rem 1.5rem rgb(181 101 118 / 24%);
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.launch-button:hover{
+    background: #a65667;
+    transform: translateY(-1px);
+}
+
+.launch-button:focus-visible{
+    outline: 3px solid rgb(181 101 118 / 35%);
+    outline-offset: 3px;
+}
+.couple{
+    display: block;
+    position: fixed;
+    z-index: 0;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: auto;
+    margin: 0;
+    opacity: 0.3;
+    --pop-opacity: 0.3;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 65%);
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 65%);
+}
+
+body:not(.invitation-open) > h1,
+body:not(.invitation-open) > .flewer,
+body:not(.invitation-open) > .invitation-copy,
+body:not(.invitation-open) > .name,
+body:not(.invitation-open) > .location,
+body:not(.invitation-open) > .date,
+body:not(.invitation-open) > .guest-names,
+body:not(.invitation-open) > .calendar-card,
+body:not(.invitation-open) > .couple{
+    opacity: 0;
+    transform: translateY(1rem) scale(0.96);
+}
+
+body.invitation-open > h1,
+body.invitation-open > .flewer,
+body.invitation-open > .invitation-copy,
+body.invitation-open > .name,
+body.invitation-open > .location,
+body.invitation-open > .date,
+body.invitation-open > .guest-names,
+body.invitation-open > .calendar-card,
+body.invitation-open > .couple{
+    animation: content-pop-in 0.8s cubic-bezier(0.2, 0.75, 0.3, 1) both;
+}
+
+body.invitation-open > h1{ animation-delay: 0.05s; }
+body.invitation-open > .flewer{ animation-delay: 0.15s; }
+body.invitation-open > .invitation-copy{ animation-delay: 0.25s; }
+body.invitation-open > .name{ animation-delay: 0.35s; }
+body.invitation-open > .location{ animation-delay: 0.45s; }
+body.invitation-open > .date{ animation-delay: 0.55s; }
+body.invitation-open > .guest-names{ animation-delay: 0.7s; }
+body.invitation-open > .calendar-card{ animation-delay: 0.8s; }
+body.invitation-open > .couple{ animation-delay: 0.5s; }
+
+@media (prefers-reduced-motion: reduce){
+    body > h1,
+    body > .flewer,
+    body > .invitation-copy,
+    body > .name,
+    body > .location,
+    body > .date,
+    body > .guest-names,
+    body > .calendar-card,
+    body > .couple{
+        animation: none;
+        transform: none;
+    }
+
+    body > h1,
+    body > .flewer,
+    body > .invitation-copy,
+    body > .name,
+    body > .location,
+    body > .date,
+    body > .guest-names,
+    body > .calendar-card{
+        opacity: 1;
+    }
+
+    body > .couple{
+        opacity: 0.3;
+    }
+}
+
+@media (max-width: 600px){
+    .launch-card{
+        width: 70vw;
+        padding: clamp(0.65rem, 4vw, 1.25rem);
+        border-radius: 1.5rem;
+    }
+
+    .launch-ring{
+        width: clamp(3rem, 12vw, 4rem);
+        height: 2.75rem;
+        margin-bottom: 0.6rem;
+    }
+
+    .launch-title{
+        font-size: clamp(1.2rem, 6vw, 1.7rem);
+    }
+
+    .launch-couple{
+        margin: 0.3rem 0 1rem;
+        font-size: clamp(1.8rem, 8vw, 2.4rem);
+    }
+
+    .launch-music-row{
+        gap: 0.55rem;
+        margin-bottom: 0.9rem;
+        padding: 0.4rem 0.55rem;
+    }
+
+    .launch-music-icon{
+        width: 2.25rem;
+        height: 2.25rem;
+    }
+
+    .launch-music-icon svg{
+        width: 1.2rem;
+        height: 1.2rem;
+    }
+
+    .launch-button{
+        min-height: 3.4rem;
+        font-size: clamp(0.9rem, 4vw, 1.1rem);
+    }
+}
+
+@media (max-width: 420px){
+    .name-form{
+        flex-direction: column;
+    }
+
+    .name-form button{
+        width: 100%;
+    }
+}

@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>wedding invitation</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&display=swap" rel="stylesheet">
+            <link href="https://fonts.googleapis.com/css2?family=Yanone+Kaffeesatz:wght@200..700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Arizonia&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,491;1,491&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,900;1,900&family=Roboto+Slab:wght@100..900&display=swap" rel="stylesheet">
+
+</head>
+<body>
+    <audio id="background-music" src="music.mp3" loop preload="none"></audio>
+    <button class="music-control" id="music-control" type="button" aria-pressed="false" disabled>Stop music</button>
+
+    <div class="launch-overlay" id="launch-overlay" role="dialog" aria-modal="true" aria-labelledby="launch-title">
+        <div class="launch-card">
+            <img class="launch-ring" src="ring.png" alt="">
+            <h2 class="launch-title" id="launch-title">You're Cordially Invited</h2>
+            <p class="launch-couple">Unais &amp; Fida</p>
+
+            <div class="launch-music-row">
+                <span class="launch-music-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M9 18V5l10-2v13M9 9l10-2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="6" cy="18" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="16" cy="16" r="3" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </span>
+                <label class="launch-music-switch">
+                    <input id="launch-music-toggle" type="checkbox" checked>
+                    <span aria-hidden="true"></span>
+                    <span class="visually-hidden">Background music</span>
+                </label>
+            </div>
+            <span class="visually-hidden" id="music-status" aria-live="polite">Play gentle wedding melody</span>
+
+            <button class="launch-button" id="open-invitation" type="button">Open Invitation</button>
+        </div>
+    </div>
+
+    <h1><img class="bismillah" src="bismillha.png" alt="بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ"></h1>
+    <img class="flewer" src="ring.png" alt="flewer">
+
+<p class="invitation-copy">TOGETHER WITH OUR FAMILIES WE CORDIALLY INVITE YOU TO THE WEDDING CEREMONY OF</p>
+
+<h2 class="name">Unais & Fida</h2>
+<a class="location" href="https://share.google/bNUbG64Pc8Npb9cW4" target="_blank" rel="noopener noreferrer" aria-label="View MTP Auditorium Trikaripur on Google Maps">
+    <svg class="location-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none">
+        <path d="M20 10c0 5-8 12-8 12S4 15 4 10a8 8 0 1 1 16 0Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="12" cy="10" r="2.5" stroke="currentColor" stroke-width="1.8"/>
+    </svg>
+    <span>MTP AUDITORIUM TRIKARIPUR</span>
+</a>
+<h2 class="date" aria-label="Countdown to December 19, 2026">
+    <span class="countdown-units" id="countdown-units">
+        <span class="countdown-unit"><span id="countdown-days">0</span><small>Days</small></span>
+        <span class="countdown-unit"><span id="countdown-hours">00</span><small>Hours</small></span>
+        <span class="countdown-unit"><span id="countdown-minutes">00</span><small>Minutes</small></span>
+        <span class="countdown-unit"><span id="countdown-seconds">00</span><small>Seconds</small></span>
+    </span>
+    <span id="countdown-message" hidden>It's the wedding day!</span>
+</h2>
+<section class="guest-names" aria-labelledby="guest-names-title">
+    <h2 id="guest-names-title">Add your name</h2>
+    <form class="name-form" id="name-form">
+        <label class="visually-hidden" for="guest-name">Your name</label>
+        <input id="guest-name" name="guestName" type="text" placeholder="Enter your name" maxlength="60" required>
+        <button type="submit" disabled>Enter</button>
+    </form>
+    <p id="guest-name-status" role="status" aria-live="polite">Connecting to guest names...</p>
+    <div class="names-box" aria-live="polite">
+        <h3>Names added</h3>
+        <ul id="guest-name-list"></ul>
+        <p id="empty-names-message">No names added yet.</p>
+    </div>
+</section>
+<section class="calendar-card" aria-labelledby="calendar-title">
+    <img class="calendar-icon" src="calender.png" alt="">
+    <div class="calendar-content">
+        <h2 id="calendar-title">Save the date</h2>
+        <p>Keep our wedding day in your calendar.</p>
+        <a class="calendar-button" href="wedding.ics">Add to calendar</a>
+    </div>
+</section>
+ <img class="couple" src="hand.png" alt="Couple holding hands"> 
+
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import { addDoc, collection, getFirestore, onSnapshot, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBZK8S38aullv1psRhuVK_6jG7ZG1eCF90",
+        authDomain: "unais-fida-fb604.firebaseapp.com",
+        projectId: "unais-fida-fb604",
+        storageBucket: "unais-fida-fb604.firebasestorage.app",
+        messagingSenderId: "250909439506",
+        appId: "1:250909439506:web:6dcb24193d84a750cacb",
+        measurementId: "G-HRWYT51FVC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const weddingDate = new Date("2026-12-19T00:00:00+05:30");
+    const countdownUnits = document.getElementById("countdown-units");
+    const countdownMessage = document.getElementById("countdown-message");
+    const nameForm = document.getElementById("name-form");
+    const guestNameInput = document.getElementById("guest-name");
+    const guestNameList = document.getElementById("guest-name-list");
+    const guestNameStatus = document.getElementById("guest-name-status");
+    const guestNameSubmit = nameForm.querySelector('button[type="submit"]');
+    const emptyNamesMessage = document.getElementById("empty-names-message");
+    const backgroundMusic = document.getElementById("background-music");
+    const musicControl = document.getElementById("music-control");
+    const launchOverlay = document.getElementById("launch-overlay");
+    const openInvitation = document.getElementById("open-invitation");
+    const launchMusicToggle = document.getElementById("launch-music-toggle");
+    const musicStatus = document.getElementById("music-status");
+
+    backgroundMusic.volume = 0.5;
+    document.body.style.overflow = "hidden";
+
+    launchMusicToggle.addEventListener("change", () => {
+        if (!launchMusicToggle.checked) {
+            backgroundMusic.pause();
+        }
+    });
+
+    openInvitation.addEventListener("click", () => {
+        if (launchMusicToggle.checked) {
+            startBackgroundMusic();
+        } else {
+            backgroundMusic.pause();
+        }
+
+        document.body.classList.add("invitation-open");
+        launchOverlay.classList.add("is-hidden");
+        document.body.style.removeProperty("overflow");
+        openInvitation.blur();
+    });
+
+    backgroundMusic.addEventListener("play", () => {
+        musicControl.disabled = false;
+        musicControl.setAttribute("aria-pressed", "true");
+        musicStatus.textContent = "Wedding melody is playing";
+    });
+
+    backgroundMusic.addEventListener("pause", () => {
+        musicControl.disabled = true;
+        musicControl.setAttribute("aria-pressed", "false");
+    });
+
+    backgroundMusic.addEventListener("error", () => {
+        musicStatus.textContent = "Music unavailable — check music.mp3";
+    });
+
+    function startBackgroundMusic() {
+        musicStatus.textContent = "Loading wedding melody...";
+        backgroundMusic.play().catch((error) => {
+            musicStatus.textContent = "Music unavailable — check music.mp3";
+            console.error("Could not play music.mp3. Make sure it is in the same folder as the invitation.", error);
+        });
+    }
+
+    musicControl.addEventListener("click", () => {
+        if (!backgroundMusic.paused) {
+            backgroundMusic.pause();
+        }
+    });
+
+    let scrollHideTimeout;
+    window.addEventListener("scroll", () => {
+        musicControl.classList.add("is-scrolling");
+        window.clearTimeout(scrollHideTimeout);
+        scrollHideTimeout = window.setTimeout(() => {
+            musicControl.classList.remove("is-scrolling");
+        }, 800);
+    }, { passive: true });
+
+    function updateCountdown() {
+        const remaining = weddingDate.getTime() - Date.now();
+
+        if (remaining <= 0) {
+            countdownUnits.hidden = true;
+            countdownMessage.hidden = false;
+            window.clearInterval(countdownInterval);
+            return;
+        }
+
+        document.getElementById("countdown-days").textContent = Math.floor(remaining / 86400000);
+        document.getElementById("countdown-hours").textContent = String(Math.floor((remaining / 3600000) % 24)).padStart(2, "0");
+        document.getElementById("countdown-minutes").textContent = String(Math.floor((remaining / 60000) % 60)).padStart(2, "0");
+        document.getElementById("countdown-seconds").textContent = String(Math.floor((remaining / 1000) % 60)).padStart(2, "0");
+    }
+
+    const countdownInterval = window.setInterval(updateCountdown, 1000);
+    updateCountdown();
+
+    nameForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const name = guestNameInput.value.trim();
+
+        if (!name || !auth.currentUser) {
+            guestNameInput.focus();
+            return;
+        }
+
+        guestNameSubmit.disabled = true;
+        guestNameStatus.textContent = "Adding your name...";
+
+        try {
+            await addDoc(collection(db, "guestNames"), {
+                name,
+                createdAt: serverTimestamp()
+            });
+            nameForm.reset();
+            guestNameInput.focus();
+            guestNameStatus.textContent = "Your name was added.";
+        } catch (error) {
+            console.error("Could not save guest name to Firebase.", error);
+            guestNameStatus.textContent = "Could not add your name. Please try again.";
+        } finally {
+            guestNameSubmit.disabled = false;
+        }
+    });
+
+    onAuthStateChanged(auth, async (user) => {
+        if (!user) {
+            try {
+                await signInAnonymously(auth);
+            } catch (error) {
+                console.error("Could not connect to Firebase. Enable anonymous sign-in in Firebase Authentication.", error);
+                guestNameStatus.textContent = "Could not connect. Enable anonymous sign-in in Firebase Authentication.";
+            }
+            return;
+        }
+
+        guestNameSubmit.disabled = false;
+        guestNameStatus.textContent = "Guest names are shared with everyone viewing this invitation.";
+        const guestNamesQuery = query(collection(db, "guestNames"), orderBy("createdAt", "asc"));
+
+        onSnapshot(guestNamesQuery, (snapshot) => {
+            guestNameList.replaceChildren();
+            snapshot.forEach((guestNameDocument) => {
+                const listItem = document.createElement("li");
+                listItem.textContent = guestNameDocument.data().name;
+                guestNameList.append(listItem);
+            });
+            emptyNamesMessage.hidden = !snapshot.empty;
+        }, (error) => {
+            console.error("Could not load guest names from Firebase.", error);
+            guestNameStatus.textContent = "Could not load guest names. Check your Firestore database and security rules.";
+        });
+    });
+
+</script>
+</body>
+</html>
