@@ -49,6 +49,22 @@ h1{
     letter-spacing: 0.07em;
 }
 
+.ceremony-time{
+    margin: 0.35rem 0 0;
+    color: #454545;
+    font-family: "Yanone Kaffeesatz", sans-serif;
+    font-size: clamp(1.15rem, 3.5vw, 1.55rem);
+    font-weight: 500;
+    line-height: 1.35;
+    letter-spacing: 0.08em;
+    text-align: center;
+}
+
+.ceremony-time span{
+    margin-left: 0.35rem;
+    font-weight: 700;
+}
+
 .location{
     display: flex;
     align-items: center;
@@ -440,6 +456,7 @@ body > h1,
 body > .flewer,
 body > .invitation-copy,
 body > .name,
+body > .ceremony-time,
 body > .location,
 body > .date,
 body > .guest-names,
@@ -642,6 +659,7 @@ body:not(.invitation-open) > h1,
 body:not(.invitation-open) > .flewer,
 body:not(.invitation-open) > .invitation-copy,
 body:not(.invitation-open) > .name,
+body:not(.invitation-open) > .ceremony-time,
 body:not(.invitation-open) > .location,
 body:not(.invitation-open) > .date,
 body:not(.invitation-open) > .guest-names,
@@ -655,6 +673,7 @@ body.invitation-open > h1,
 body.invitation-open > .flewer,
 body.invitation-open > .invitation-copy,
 body.invitation-open > .name,
+body.invitation-open > .ceremony-time,
 body.invitation-open > .location,
 body.invitation-open > .date,
 body.invitation-open > .guest-names,
@@ -667,6 +686,7 @@ body.invitation-open > h1{ animation-delay: 0.05s; }
 body.invitation-open > .flewer{ animation-delay: 0.15s; }
 body.invitation-open > .invitation-copy{ animation-delay: 0.25s; }
 body.invitation-open > .name{ animation-delay: 0.35s; }
+body.invitation-open > .ceremony-time{ animation-delay: 0.4s; }
 body.invitation-open > .location{ animation-delay: 0.45s; }
 body.invitation-open > .date{ animation-delay: 0.55s; }
 body.invitation-open > .guest-names{ animation-delay: 0.7s; }
@@ -691,6 +711,7 @@ body.invitation-open > .couple{ animation-delay: 0.5s; }
     body > .flewer,
     body > .invitation-copy,
     body > .name,
+    body > .ceremony-time,
     body > .location,
     body > .date,
     body > .guest-names,
