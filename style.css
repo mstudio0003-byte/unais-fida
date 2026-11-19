@@ -371,10 +371,27 @@ h1{
     cursor: pointer;
 }
 
+.guest-name-add{
+    margin-bottom: 1rem;
+    padding: 0.65rem 1rem;
+    border: 0;
+    border-radius: var(--box-radius);
+    background: #b56576;
+    color: #fff;
+    font: inherit;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.guest-name-add:hover{
+    background: #a65667;
+}
+
 .guest-name-edit:hover{
     background: #a65667;
 }
 
+.guest-name-add:focus-visible,
 .guest-name-edit:focus-visible{
     outline: 2px solid #b56576;
     outline-offset: 2px;

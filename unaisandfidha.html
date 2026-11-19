@@ -67,11 +67,13 @@
     <span id="countdown-message" hidden>It's the wedding day!</span>
 </h2>
 <section class="guest-names" aria-labelledby="guest-names-title">
-    <h2 id="guest-names-title">Add your name</h2>
+    <h2 id="guest-names-title">Add family names</h2>
+    <button class="guest-name-add" id="guest-name-add" type="button" hidden>Add another name</button>
     <form class="name-form" id="name-form">
-        <label class="visually-hidden" for="guest-name">Your name</label>
-        <input id="guest-name" name="guestName" type="text" placeholder="Enter your name" maxlength="60" required>
-        <button type="button" disabled>Enter</button>
+        <label class="visually-hidden" for="guest-name">Family member's name</label>
+        <input id="guest-name" name="guestName" type="text" placeholder="Enter a family member's name" maxlength="60" required>
+        <button type="button" disabled>Add name</button>
+        <button class="guest-name-cancel" id="guest-name-cancel" type="button" hidden>Cancel</button>
     </form>
     <p id="guest-name-status" role="status" aria-live="polite">Connecting to guest names...</p>
     <div class="names-box" aria-live="polite">
@@ -117,13 +119,16 @@
     const guestNameInput = document.getElementById("guest-name");
     const guestNameList = document.getElementById("guest-name-list");
     const guestNameStatus = document.getElementById("guest-name-status");
+    const guestNameAdd = document.getElementById("guest-name-add");
     const guestNameSubmit = nameForm.querySelector('button[type="button"]');
+    const guestNameCancel = document.getElementById("guest-name-cancel");
     const emptyNamesMessage = document.getElementById("empty-names-message");
     const existingGuestNameKeys = new Set();
-    const existingGuestNameOwners = new Map();
+    const existingGuestNameDocuments = new Map();
+    const ownGuestNames = new Map();
     let guestNamesLoaded = false;
-    let ownGuestName = null;
-    let isEditingOwnName = false;
+    let editingGuestNameId = null;
+    let isAddingAnotherName = false;
     let savingGuestName = false;
     const backgroundMusic = document.getElementById("background-music");
     const musicControl = document.getElementById("music-control");
@@ -221,39 +226,52 @@
     }
 
     function updateGuestNameForm() {
-        const hasOwnName = Boolean(ownGuestName);
-        guestNamesTitle.textContent = isEditingOwnName
-            ? "Edit your name"
-            : hasOwnName
-                ? "Your name"
-                : "Add your name";
-        nameForm.hidden = hasOwnName && !isEditingOwnName;
-        guestNameInput.disabled = hasOwnName && !isEditingOwnName;
-        guestNameSubmit.textContent = isEditingOwnName ? "Save" : "Enter";
+        const isEditing = Boolean(editingGuestNameId);
+        const hasGuestNames = ownGuestNames.size > 0;
+        guestNamesTitle.textContent = isEditing
+            ? "Edit family member name"
+            : hasGuestNames && !isAddingAnotherName
+                ? "Family names added"
+                : "Add family names";
+        nameForm.hidden = hasGuestNames && !isEditing && !isAddingAnotherName;
+        guestNameAdd.hidden = !hasGuestNames || isEditing || isAddingAnotherName;
+        guestNameInput.disabled = isEditing && !ownGuestNames.has(editingGuestNameId);
+        guestNameSubmit.textContent = isEditing ? "Save" : "Add name";
         guestNameSubmit.disabled = !guestNamesLoaded
             || savingGuestName
-            || (hasOwnName && !isEditingOwnName);
-
-        if (hasOwnName && !isEditingOwnName) {
-            guestNameInput.value = ownGuestName.name;
-        }
+            || (isEditing && !ownGuestNames.has(editingGuestNameId));
+        guestNameCancel.hidden = !isEditing && !isAddingAnotherName;
     }
 
-    function startEditingOwnName() {
-        if (!ownGuestName || auth.currentUser?.uid !== ownGuestName.ownerUid) {
+    function startEditingGuestName(guestName) {
+        if (!ownGuestNames.has(guestName.documentId)
+            || auth.currentUser?.uid !== guestName.ownerUid) {
             return;
         }
 
-        isEditingOwnName = true;
-        nameForm.hidden = false;
-        guestNameInput.disabled = false;
-        guestNameInput.value = ownGuestName.name;
-        guestNameSubmit.textContent = "Save";
-        guestNameSubmit.disabled = !guestNamesLoaded || savingGuestName;
-        setGuestNameStatus("Change your name, then click Save.");
+        editingGuestNameId = guestName.documentId;
+        isAddingAnotherName = false;
+        guestNameInput.value = guestName.name;
+        updateGuestNameForm();
+        setGuestNameStatus("Change this name, then click Save.");
         guestNameInput.focus();
         guestNameInput.select();
     }
+
+    guestNameAdd.addEventListener("click", () => {
+        isAddingAnotherName = true;
+        guestNameInput.value = "";
+        updateGuestNameForm();
+        guestNameInput.focus();
+    });
+
+    guestNameCancel.addEventListener("click", () => {
+        editingGuestNameId = null;
+        isAddingAnotherName = false;
+        guestNameInput.value = "";
+        updateGuestNameForm();
+        setGuestNameStatus("Add another family member's name.");
+    });
 
     nameForm.addEventListener("submit", (event) => {
         event.preventDefault();
@@ -275,35 +293,37 @@
             return;
         }
 
-        if (ownGuestName && !isEditingOwnName) {
-            setGuestNameStatus("Use Edit beside your name to change it.");
+        const guestNameBeingEdited = editingGuestNameId
+            ? ownGuestNames.get(editingGuestNameId)
+            : null;
+        if (editingGuestNameId && (!guestNameBeingEdited || guestNameBeingEdited.ownerUid !== user.uid)) {
+            setGuestNameStatus("This name could not be verified. Reload the page and try again.");
             return;
         }
 
-        if (isEditingOwnName && (!ownGuestName || ownGuestName.ownerUid !== user.uid)) {
-            setGuestNameStatus("Your name could not be verified. Reload the page and try again.");
-            return;
-        }
-
-        const existingOwnerUid = existingGuestNameOwners.get(normalizedName);
-        if (existingGuestNameKeys.has(normalizedName) && existingOwnerUid !== user.uid) {
+        const existingDocumentIds = existingGuestNameDocuments.get(normalizedName);
+        if (existingGuestNameKeys.has(normalizedName)
+            && [...existingDocumentIds].some((documentId) => documentId !== editingGuestNameId)) {
             setGuestNameStatus("This name has already been added.", true);
             return;
         }
 
-        const wasEditing = isEditingOwnName;
-        const previousName = ownGuestName?.name;
+        const wasEditing = Boolean(editingGuestNameId);
+        const previousName = guestNameBeingEdited?.name;
         if (wasEditing && normalizeGuestName(previousName) === normalizedName) {
-            isEditingOwnName = false;
+            editingGuestNameId = null;
+            guestNameInput.value = "";
             updateGuestNameForm();
-            setGuestNameStatus("Your name is unchanged.");
+            setGuestNameStatus("The name is unchanged.");
             return;
         }
 
         guestNameSubmit.disabled = true;
         savingGuestName = true;
-        setGuestNameStatus(wasEditing ? "Updating your name..." : "Adding your name...");
-        const guestNameDocument = doc(db, "guestNames", user.uid);
+        setGuestNameStatus(wasEditing ? "Updating this name..." : "Adding family member's name...");
+        const guestNameDocument = wasEditing
+            ? doc(db, "guestNames", editingGuestNameId)
+            : doc(collection(db, "guestNames"));
 
         try {
             await runTransaction(db, async (transaction) => {
@@ -329,25 +349,29 @@
                 });
             });
 
-            ownGuestName = { ownerUid: user.uid, name };
-            isEditingOwnName = false;
+            ownGuestNames.set(guestNameDocument.id, { ownerUid: user.uid, name });
+            editingGuestNameId = null;
+            isAddingAnotherName = false;
+            guestNameInput.value = "";
             updateGuestNameForm();
-            setGuestNameStatus(wasEditing ? "Your name was updated." : "Your name was added.");
+            setGuestNameStatus(wasEditing
+                ? "The name was updated."
+                : "The family member's name was added.");
         } catch (error) {
             if (error.message === "GUEST_NAME_ALREADY_EXISTS") {
-                setGuestNameStatus("This browser already has a name. Reload the page to edit it.");
+                setGuestNameStatus("Could not add this family member's name. Please try again.");
                 return;
             }
 
             if (error.message === "OWNED_GUEST_NAME_NOT_FOUND") {
-                setGuestNameStatus("Your name could not be verified. Reload the page and try again.");
+                setGuestNameStatus("This name could not be verified. Reload the page and try again.");
                 return;
             }
 
             console.error("Could not save guest name to Firebase.", error);
             setGuestNameStatus(wasEditing
-                ? "Could not update your name. Check your Firestore rules."
-                : "Could not add your name. Check your Firestore rules.");
+                ? "Could not update this name. Check your Firestore rules."
+                : "Could not add this name. Check your Firestore rules.");
         } finally {
             savingGuestName = false;
             updateGuestNameForm();
@@ -372,9 +396,9 @@
         onSnapshot(guestNamesQuery, (snapshot) => {
             guestNameList.replaceChildren();
             existingGuestNameKeys.clear();
-            existingGuestNameOwners.clear();
+            existingGuestNameDocuments.clear();
+            ownGuestNames.clear();
             const uniqueNames = new Map();
-            let nextOwnGuestName = null;
 
             snapshot.forEach((guestNameDocument) => {
                 const guestNameData = guestNameDocument.data();
@@ -388,13 +412,17 @@
                     return;
                 }
 
-                const ownerUid = guestNameData.ownerUid === guestNameDocument.id
+                const ownerUid = guestNameData.ownerUid === user.uid
                     ? guestNameData.ownerUid
                     : null;
                 const isOwnName = ownerUid === user.uid;
                 existingGuestNameKeys.add(normalizedName);
-                if (!existingGuestNameOwners.has(normalizedName) || isOwnName) {
-                    existingGuestNameOwners.set(normalizedName, ownerUid);
+                if (!existingGuestNameDocuments.has(normalizedName)) {
+                    existingGuestNameDocuments.set(normalizedName, new Set());
+                }
+                existingGuestNameDocuments.get(normalizedName).add(guestNameDocument.id);
+                if (isOwnName) {
+                    ownGuestNames.set(guestNameDocument.id, { ownerUid, name });
                 }
                 if (!uniqueNames.has(normalizedName) || isOwnName) {
                     uniqueNames.set(normalizedName, {
@@ -402,9 +430,6 @@
                         name,
                         ownerUid
                     });
-                }
-                if (guestNameDocument.id === user.uid && isOwnName) {
-                    nextOwnGuestName = { ownerUid, name };
                 }
             });
 
@@ -414,30 +439,31 @@
                 nameLabel.textContent = guestName.name;
                 listItem.append(nameLabel);
 
-                if (guestName.documentId === user.uid && guestName.ownerUid === user.uid) {
+                if (guestName.ownerUid === user.uid) {
                     const editButton = document.createElement("button");
                     editButton.type = "button";
                     editButton.className = "guest-name-edit";
                     editButton.textContent = "Edit";
-                    editButton.setAttribute("aria-label", "Edit your name");
-                    editButton.addEventListener("click", startEditingOwnName);
+                    editButton.setAttribute("aria-label", `Edit ${guestName.name}`);
+                    editButton.addEventListener("click", () => startEditingGuestName(guestName));
                     listItem.append(editButton);
                 }
 
                 guestNameList.append(listItem);
             }
 
-            ownGuestName = nextOwnGuestName;
-            if (!ownGuestName) {
-                isEditingOwnName = false;
+            if (editingGuestNameId && !ownGuestNames.has(editingGuestNameId)) {
+                editingGuestNameId = null;
+                guestNameInput.value = "";
+            }
+            if (ownGuestNames.size === 0) {
+                isAddingAnotherName = false;
             }
             emptyNamesMessage.hidden = existingGuestNameKeys.size > 0;
             guestNamesLoaded = true;
             updateGuestNameForm();
-            if (!savingGuestName && !isEditingOwnName) {
-                setGuestNameStatus(ownGuestName
-                    ? "Use Edit beside your name to change it."
-                    : "Guest names are shared with everyone viewing this invitation.");
+            if (!savingGuestName && !editingGuestNameId) {
+                setGuestNameStatus("Add each family member's name. Names are shared with everyone viewing this invitation.");
             }
         }, (error) => {
             console.error("Could not load guest names from Firebase.", error);
