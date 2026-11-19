@@ -341,7 +341,35 @@ h1{
     display: grid;
     gap: 0.35rem;
     margin: 0;
-    padding-left: 1.2rem;
+    padding-left: 0;
+    list-style: none;
+}
+
+.names-box li{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.guest-name-edit{
+    flex: 0 0 auto;
+    padding: 0.25rem 0.7rem;
+    border: 0;
+    border-radius: 999px;
+    background: #b56576;
+    color: #fff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.guest-name-edit:hover{
+    background: #a65667;
+}
+
+.guest-name-edit:focus-visible{
+    outline: 2px solid #b56576;
+    outline-offset: 2px;
 }
 
 .names-box p{

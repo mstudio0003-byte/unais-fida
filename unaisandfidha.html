@@ -94,7 +94,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-    import { collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+    import { collection, doc, getFirestore, onSnapshot, orderBy, query, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBZK8S38aullv1psRhuVK_6iGZ2G1eCE90",
@@ -113,13 +113,18 @@
     const countdownUnits = document.getElementById("countdown-units");
     const countdownMessage = document.getElementById("countdown-message");
     const nameForm = document.getElementById("name-form");
+    const guestNamesTitle = document.getElementById("guest-names-title");
     const guestNameInput = document.getElementById("guest-name");
     const guestNameList = document.getElementById("guest-name-list");
     const guestNameStatus = document.getElementById("guest-name-status");
     const guestNameSubmit = nameForm.querySelector('button[type="button"]');
     const emptyNamesMessage = document.getElementById("empty-names-message");
     const existingGuestNameKeys = new Set();
+    const existingGuestNameOwners = new Map();
     let guestNamesLoaded = false;
+    let ownGuestName = null;
+    let isEditingOwnName = false;
+    let savingGuestName = false;
     const backgroundMusic = document.getElementById("background-music");
     const musicControl = document.getElementById("music-control");
     const launchOverlay = document.getElementById("launch-overlay");
@@ -210,6 +215,41 @@
         return name.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
     }
 
+    function updateGuestNameForm() {
+        const hasOwnName = Boolean(ownGuestName);
+        guestNamesTitle.textContent = isEditingOwnName
+            ? "Edit your name"
+            : hasOwnName
+                ? "Your name"
+                : "Add your name";
+        nameForm.hidden = hasOwnName && !isEditingOwnName;
+        guestNameInput.disabled = hasOwnName && !isEditingOwnName;
+        guestNameSubmit.textContent = isEditingOwnName ? "Save" : "Enter";
+        guestNameSubmit.disabled = !guestNamesLoaded
+            || savingGuestName
+            || (hasOwnName && !isEditingOwnName);
+
+        if (hasOwnName && !isEditingOwnName) {
+            guestNameInput.value = ownGuestName.name;
+        }
+    }
+
+    function startEditingOwnName() {
+        if (!ownGuestName || auth.currentUser?.uid !== ownGuestName.ownerUid) {
+            return;
+        }
+
+        isEditingOwnName = true;
+        nameForm.hidden = false;
+        guestNameInput.disabled = false;
+        guestNameInput.value = ownGuestName.name;
+        guestNameSubmit.textContent = "Save";
+        guestNameSubmit.disabled = !guestNamesLoaded || savingGuestName;
+        guestNameStatus.textContent = "Change your name, then click Save.";
+        guestNameInput.focus();
+        guestNameInput.select();
+    }
+
     nameForm.addEventListener("submit", (event) => {
         event.preventDefault();
     });
@@ -223,47 +263,89 @@
     guestNameSubmit.addEventListener("click", async () => {
         const name = guestNameInput.value.trim().replace(/\s+/g, " ");
         const normalizedName = normalizeGuestName(name);
+        const user = auth.currentUser;
 
-        if (!name || !auth.currentUser || !guestNamesLoaded) {
+        if (!name || !user || !guestNamesLoaded) {
             guestNameInput.focus();
             return;
         }
 
-        if (existingGuestNameKeys.has(normalizedName)) {
+        if (ownGuestName && !isEditingOwnName) {
+            guestNameStatus.textContent = "Use Edit beside your name to change it.";
+            return;
+        }
+
+        if (isEditingOwnName && (!ownGuestName || ownGuestName.ownerUid !== user.uid)) {
+            guestNameStatus.textContent = "Your name could not be verified. Reload the page and try again.";
+            return;
+        }
+
+        const existingOwnerUid = existingGuestNameOwners.get(normalizedName);
+        if (existingGuestNameKeys.has(normalizedName) && existingOwnerUid !== user.uid) {
             guestNameStatus.textContent = "That name has already been added.";
             return;
         }
 
+        const wasEditing = isEditingOwnName;
+        const previousName = ownGuestName?.name;
+        if (wasEditing && normalizeGuestName(previousName) === normalizedName) {
+            isEditingOwnName = false;
+            updateGuestNameForm();
+            guestNameStatus.textContent = "Your name is unchanged.";
+            return;
+        }
+
         guestNameSubmit.disabled = true;
-        guestNameStatus.textContent = "Adding your name...";
-        const guestNameDocument = doc(db, "guestNames", encodeURIComponent(normalizedName));
+        savingGuestName = true;
+        guestNameStatus.textContent = wasEditing ? "Updating your name..." : "Adding your name...";
+        const guestNameDocument = doc(db, "guestNames", user.uid);
 
         try {
-            await setDoc(guestNameDocument, {
-                name,
-                createdAt: serverTimestamp()
-            });
-            existingGuestNameKeys.add(normalizedName);
-            nameForm.reset();
-            guestNameInput.focus();
-            guestNameStatus.textContent = "Your name was added.";
-        } catch (error) {
-            if (error.code === "permission-denied") {
-                try {
-                    if ((await getDoc(guestNameDocument)).exists()) {
-                        existingGuestNameKeys.add(normalizedName);
-                        guestNameStatus.textContent = "That name has already been added.";
-                        return;
+            await runTransaction(db, async (transaction) => {
+                const currentGuestName = await transaction.get(guestNameDocument);
+
+                if (wasEditing) {
+                    if (!currentGuestName.exists() || currentGuestName.data().ownerUid !== user.uid) {
+                        throw new Error("OWNED_GUEST_NAME_NOT_FOUND");
                     }
-                } catch (lookupError) {
-                    console.error("Could not check whether the guest name was already added.", lookupError);
+
+                    transaction.update(guestNameDocument, { name });
+                    return;
                 }
+
+                if (currentGuestName.exists()) {
+                    throw new Error("GUEST_NAME_ALREADY_EXISTS");
+                }
+
+                transaction.set(guestNameDocument, {
+                    name,
+                    ownerUid: user.uid,
+                    createdAt: serverTimestamp()
+                });
+            });
+
+            ownGuestName = { ownerUid: user.uid, name };
+            isEditingOwnName = false;
+            updateGuestNameForm();
+            guestNameStatus.textContent = wasEditing ? "Your name was updated." : "Your name was added.";
+        } catch (error) {
+            if (error.message === "GUEST_NAME_ALREADY_EXISTS") {
+                guestNameStatus.textContent = "This browser already has a name. Reload the page to edit it.";
+                return;
+            }
+
+            if (error.message === "OWNED_GUEST_NAME_NOT_FOUND") {
+                guestNameStatus.textContent = "Your name could not be verified. Reload the page and try again.";
+                return;
             }
 
             console.error("Could not save guest name to Firebase.", error);
-            guestNameStatus.textContent = "Could not add your name. Please try again.";
+            guestNameStatus.textContent = wasEditing
+                ? "Could not update your name. Check your Firestore rules."
+                : "Could not add your name. Check your Firestore rules.";
         } finally {
-            guestNameSubmit.disabled = !guestNamesLoaded;
+            savingGuestName = false;
+            updateGuestNameForm();
         }
     });
 
@@ -285,30 +367,77 @@
         onSnapshot(guestNamesQuery, (snapshot) => {
             guestNameList.replaceChildren();
             existingGuestNameKeys.clear();
+            existingGuestNameOwners.clear();
+            const uniqueNames = new Map();
+            let nextOwnGuestName = null;
+
             snapshot.forEach((guestNameDocument) => {
-                const name = guestNameDocument.data().name;
+                const guestNameData = guestNameDocument.data();
+                const name = guestNameData.name;
                 if (typeof name !== "string") {
                     return;
                 }
 
                 const normalizedName = normalizeGuestName(name);
-                if (!normalizedName || existingGuestNameKeys.has(normalizedName)) {
+                if (!normalizedName) {
                     return;
                 }
 
+                const ownerUid = guestNameData.ownerUid === guestNameDocument.id
+                    ? guestNameData.ownerUid
+                    : null;
+                const isOwnName = ownerUid === user.uid;
                 existingGuestNameKeys.add(normalizedName);
-                const listItem = document.createElement("li");
-                listItem.textContent = name;
-                guestNameList.append(listItem);
+                if (!existingGuestNameOwners.has(normalizedName) || isOwnName) {
+                    existingGuestNameOwners.set(normalizedName, ownerUid);
+                }
+                if (!uniqueNames.has(normalizedName) || isOwnName) {
+                    uniqueNames.set(normalizedName, {
+                        documentId: guestNameDocument.id,
+                        name,
+                        ownerUid
+                    });
+                }
+                if (guestNameDocument.id === user.uid && isOwnName) {
+                    nextOwnGuestName = { ownerUid, name };
+                }
             });
+
+            for (const guestName of uniqueNames.values()) {
+                const listItem = document.createElement("li");
+                const nameLabel = document.createElement("span");
+                nameLabel.textContent = guestName.name;
+                listItem.append(nameLabel);
+
+                if (guestName.documentId === user.uid && guestName.ownerUid === user.uid) {
+                    const editButton = document.createElement("button");
+                    editButton.type = "button";
+                    editButton.className = "guest-name-edit";
+                    editButton.textContent = "Edit";
+                    editButton.setAttribute("aria-label", "Edit your name");
+                    editButton.addEventListener("click", startEditingOwnName);
+                    listItem.append(editButton);
+                }
+
+                guestNameList.append(listItem);
+            }
+
+            ownGuestName = nextOwnGuestName;
+            if (!ownGuestName) {
+                isEditingOwnName = false;
+            }
             emptyNamesMessage.hidden = existingGuestNameKeys.size > 0;
             guestNamesLoaded = true;
-            guestNameSubmit.disabled = false;
-            guestNameStatus.textContent = "Guest names are shared with everyone viewing this invitation.";
+            updateGuestNameForm();
+            if (!savingGuestName && !isEditingOwnName) {
+                guestNameStatus.textContent = ownGuestName
+                    ? "Use Edit beside your name to change it."
+                    : "Guest names are shared with everyone viewing this invitation.";
+            }
         }, (error) => {
             console.error("Could not load guest names from Firebase.", error);
             guestNamesLoaded = false;
-            guestNameSubmit.disabled = true;
+            updateGuestNameForm();
             guestNameStatus.textContent = "Could not load guest names. Check your Firestore database and security rules.";
         });
     });
