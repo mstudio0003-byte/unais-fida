@@ -71,7 +71,7 @@
     <form class="name-form" id="name-form">
         <label class="visually-hidden" for="guest-name">Your name</label>
         <input id="guest-name" name="guestName" type="text" placeholder="Enter your name" maxlength="60" required>
-        <button type="submit" disabled>Enter</button>
+        <button type="button" disabled>Enter</button>
     </form>
     <p id="guest-name-status" role="status" aria-live="polite">Connecting to guest names...</p>
     <div class="names-box" aria-live="polite">
@@ -94,7 +94,7 @@
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-    import { addDoc, collection, getFirestore, onSnapshot, orderBy, query, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+    import { collection, doc, getDoc, getFirestore, onSnapshot, orderBy, query, serverTimestamp, setDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyBZK8S38aullv1psRhuVK_6iGZ2G1eCE90",
@@ -116,8 +116,10 @@
     const guestNameInput = document.getElementById("guest-name");
     const guestNameList = document.getElementById("guest-name-list");
     const guestNameStatus = document.getElementById("guest-name-status");
-    const guestNameSubmit = nameForm.querySelector('button[type="submit"]');
+    const guestNameSubmit = nameForm.querySelector('button[type="button"]');
     const emptyNamesMessage = document.getElementById("empty-names-message");
+    const existingGuestNameKeys = new Set();
+    let guestNamesLoaded = false;
     const backgroundMusic = document.getElementById("background-music");
     const musicControl = document.getElementById("music-control");
     const launchOverlay = document.getElementById("launch-overlay");
@@ -204,31 +206,64 @@
     const countdownInterval = window.setInterval(updateCountdown, 1000);
     updateCountdown();
 
-    nameForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const name = guestNameInput.value.trim();
+    function normalizeGuestName(name) {
+        return name.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
+    }
 
-        if (!name || !auth.currentUser) {
+    nameForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+    });
+
+    guestNameInput.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+            event.preventDefault();
+        }
+    });
+
+    guestNameSubmit.addEventListener("click", async () => {
+        const name = guestNameInput.value.trim().replace(/\s+/g, " ");
+        const normalizedName = normalizeGuestName(name);
+
+        if (!name || !auth.currentUser || !guestNamesLoaded) {
             guestNameInput.focus();
+            return;
+        }
+
+        if (existingGuestNameKeys.has(normalizedName)) {
+            guestNameStatus.textContent = "That name has already been added.";
             return;
         }
 
         guestNameSubmit.disabled = true;
         guestNameStatus.textContent = "Adding your name...";
+        const guestNameDocument = doc(db, "guestNames", encodeURIComponent(normalizedName));
 
         try {
-            await addDoc(collection(db, "guestNames"), {
+            await setDoc(guestNameDocument, {
                 name,
                 createdAt: serverTimestamp()
             });
+            existingGuestNameKeys.add(normalizedName);
             nameForm.reset();
             guestNameInput.focus();
             guestNameStatus.textContent = "Your name was added.";
         } catch (error) {
+            if (error.code === "permission-denied") {
+                try {
+                    if ((await getDoc(guestNameDocument)).exists()) {
+                        existingGuestNameKeys.add(normalizedName);
+                        guestNameStatus.textContent = "That name has already been added.";
+                        return;
+                    }
+                } catch (lookupError) {
+                    console.error("Could not check whether the guest name was already added.", lookupError);
+                }
+            }
+
             console.error("Could not save guest name to Firebase.", error);
             guestNameStatus.textContent = "Could not add your name. Please try again.";
         } finally {
-            guestNameSubmit.disabled = false;
+            guestNameSubmit.disabled = !guestNamesLoaded;
         }
     });
 
@@ -243,20 +278,37 @@
             return;
         }
 
-        guestNameSubmit.disabled = false;
-        guestNameStatus.textContent = "Guest names are shared with everyone viewing this invitation.";
+        guestNameSubmit.disabled = true;
+        guestNameStatus.textContent = "Loading guest names...";
         const guestNamesQuery = query(collection(db, "guestNames"), orderBy("createdAt", "asc"));
 
         onSnapshot(guestNamesQuery, (snapshot) => {
             guestNameList.replaceChildren();
+            existingGuestNameKeys.clear();
             snapshot.forEach((guestNameDocument) => {
+                const name = guestNameDocument.data().name;
+                if (typeof name !== "string") {
+                    return;
+                }
+
+                const normalizedName = normalizeGuestName(name);
+                if (!normalizedName || existingGuestNameKeys.has(normalizedName)) {
+                    return;
+                }
+
+                existingGuestNameKeys.add(normalizedName);
                 const listItem = document.createElement("li");
-                listItem.textContent = guestNameDocument.data().name;
+                listItem.textContent = name;
                 guestNameList.append(listItem);
             });
-            emptyNamesMessage.hidden = !snapshot.empty;
+            emptyNamesMessage.hidden = existingGuestNameKeys.size > 0;
+            guestNamesLoaded = true;
+            guestNameSubmit.disabled = false;
+            guestNameStatus.textContent = "Guest names are shared with everyone viewing this invitation.";
         }, (error) => {
             console.error("Could not load guest names from Firebase.", error);
+            guestNamesLoaded = false;
+            guestNameSubmit.disabled = true;
             guestNameStatus.textContent = "Could not load guest names. Check your Firestore database and security rules.";
         });
     });
