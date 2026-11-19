@@ -215,6 +215,11 @@
         return name.normalize("NFKC").trim().replace(/\s+/g, " ").toLowerCase();
     }
 
+    function setGuestNameStatus(message, isWarning = false) {
+        guestNameStatus.textContent = message;
+        guestNameStatus.classList.toggle("guest-name-status--warning", isWarning);
+    }
+
     function updateGuestNameForm() {
         const hasOwnName = Boolean(ownGuestName);
         guestNamesTitle.textContent = isEditingOwnName
@@ -245,7 +250,7 @@
         guestNameInput.value = ownGuestName.name;
         guestNameSubmit.textContent = "Save";
         guestNameSubmit.disabled = !guestNamesLoaded || savingGuestName;
-        guestNameStatus.textContent = "Change your name, then click Save.";
+        setGuestNameStatus("Change your name, then click Save.");
         guestNameInput.focus();
         guestNameInput.select();
     }
@@ -271,18 +276,18 @@
         }
 
         if (ownGuestName && !isEditingOwnName) {
-            guestNameStatus.textContent = "Use Edit beside your name to change it.";
+            setGuestNameStatus("Use Edit beside your name to change it.");
             return;
         }
 
         if (isEditingOwnName && (!ownGuestName || ownGuestName.ownerUid !== user.uid)) {
-            guestNameStatus.textContent = "Your name could not be verified. Reload the page and try again.";
+            setGuestNameStatus("Your name could not be verified. Reload the page and try again.");
             return;
         }
 
         const existingOwnerUid = existingGuestNameOwners.get(normalizedName);
         if (existingGuestNameKeys.has(normalizedName) && existingOwnerUid !== user.uid) {
-            guestNameStatus.textContent = "That name has already been added.";
+            setGuestNameStatus("This name has already been added.", true);
             return;
         }
 
@@ -291,13 +296,13 @@
         if (wasEditing && normalizeGuestName(previousName) === normalizedName) {
             isEditingOwnName = false;
             updateGuestNameForm();
-            guestNameStatus.textContent = "Your name is unchanged.";
+            setGuestNameStatus("Your name is unchanged.");
             return;
         }
 
         guestNameSubmit.disabled = true;
         savingGuestName = true;
-        guestNameStatus.textContent = wasEditing ? "Updating your name..." : "Adding your name...";
+        setGuestNameStatus(wasEditing ? "Updating your name..." : "Adding your name...");
         const guestNameDocument = doc(db, "guestNames", user.uid);
 
         try {
@@ -327,22 +332,22 @@
             ownGuestName = { ownerUid: user.uid, name };
             isEditingOwnName = false;
             updateGuestNameForm();
-            guestNameStatus.textContent = wasEditing ? "Your name was updated." : "Your name was added.";
+            setGuestNameStatus(wasEditing ? "Your name was updated." : "Your name was added.");
         } catch (error) {
             if (error.message === "GUEST_NAME_ALREADY_EXISTS") {
-                guestNameStatus.textContent = "This browser already has a name. Reload the page to edit it.";
+                setGuestNameStatus("This browser already has a name. Reload the page to edit it.");
                 return;
             }
 
             if (error.message === "OWNED_GUEST_NAME_NOT_FOUND") {
-                guestNameStatus.textContent = "Your name could not be verified. Reload the page and try again.";
+                setGuestNameStatus("Your name could not be verified. Reload the page and try again.");
                 return;
             }
 
             console.error("Could not save guest name to Firebase.", error);
-            guestNameStatus.textContent = wasEditing
+            setGuestNameStatus(wasEditing
                 ? "Could not update your name. Check your Firestore rules."
-                : "Could not add your name. Check your Firestore rules.";
+                : "Could not add your name. Check your Firestore rules.");
         } finally {
             savingGuestName = false;
             updateGuestNameForm();
@@ -355,13 +360,13 @@
                 await signInAnonymously(auth);
             } catch (error) {
                 console.error("Could not connect to Firebase. Enable anonymous sign-in in Firebase Authentication.", error);
-                guestNameStatus.textContent = "Could not connect. Enable anonymous sign-in in Firebase Authentication.";
+                setGuestNameStatus("Could not connect. Enable anonymous sign-in in Firebase Authentication.");
             }
             return;
         }
 
         guestNameSubmit.disabled = true;
-        guestNameStatus.textContent = "Loading guest names...";
+        setGuestNameStatus("Loading guest names...");
         const guestNamesQuery = query(collection(db, "guestNames"), orderBy("createdAt", "asc"));
 
         onSnapshot(guestNamesQuery, (snapshot) => {
@@ -430,15 +435,15 @@
             guestNamesLoaded = true;
             updateGuestNameForm();
             if (!savingGuestName && !isEditingOwnName) {
-                guestNameStatus.textContent = ownGuestName
+                setGuestNameStatus(ownGuestName
                     ? "Use Edit beside your name to change it."
-                    : "Guest names are shared with everyone viewing this invitation.";
+                    : "Guest names are shared with everyone viewing this invitation.");
             }
         }, (error) => {
             console.error("Could not load guest names from Firebase.", error);
             guestNamesLoaded = false;
             updateGuestNameForm();
-            guestNameStatus.textContent = "Could not load guest names. Check your Firestore database and security rules.";
+            setGuestNameStatus("Could not load guest names. Check your Firestore database and security rules.");
         });
     });
 

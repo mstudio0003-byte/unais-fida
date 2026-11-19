@@ -316,6 +316,14 @@ h1{
     outline-offset: 2px;
 }
 
+.guest-name-status--warning{
+    padding: 0.35rem 0.65rem;
+    border-radius: 0.5rem;
+    background: rgb(179 38 30 / 10%);
+    color: #b3261e;
+    font-weight: 600;
+}
+
 .names-box{
     min-height: 4rem;
     max-height: 12rem;
